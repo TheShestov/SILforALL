@@ -1,0 +1,264 @@
+string groupName = gadget_getSingleValue(argv, "Имя группы");
+boolean showWorkflowXml = gadget_isChecked(argv, "XML");
+
+
+runnerLog("Анализ использования группы: " + groupName);
+//Project Roles
+string qsql = "SELECT pra.roletypeparameter AS \"Group\", pr.name AS \"Project Role\", p.pname AS \"Project\" FROM projectroleactor pra LEFT JOIN projectrole pr ON pra.projectroleid = pr.id LEFT JOIN project p ON pra.pid = p.id WHERE pra.roletype = 'atlassian-group-role-actor'AND pra.roletypeparameter in ('" + groupName + "');";
+string [] result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Project Roles");
+    number n = size(result) / 3;
+    if(n > 1){
+        for(int i=0;size(result)/n>=i;i=i+3){
+            runnerLog("Проект: " + result[i+2]);
+            runnerLog("Роль: " + result[i+1]);
+            runnerLog("---"); 
+        }
+    }
+    else {
+        runnerLog("Проект: " + result[2]);
+        runnerLog("Роль: " + result[1]);
+        runnerLog("---");
+    }
+}
+else runnerLog("Project Roles не использует группу " + groupName);
+runnerLog("---#---#---#---#---");
+//result[0] = Группа, result[1] = Роль, result[2] = Имя проекта
+//runnerLog(result);
+
+//Global Permissions
+qsql = "SELECT gp.group_id AS \"Group\", gp.permission AS \"Permission\" FROM globalpermissionentry gp WHERE gp.group_id in ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Global Permissions");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("GP name: " + result[i+1]);
+            runnerLog("---");
+        }
+    }
+    else {
+        runnerLog("GP name: " + result[1]);
+        runnerLog("---");
+    }
+}
+else runnerLog("Global Permissions не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя Global Permission
+
+//Custom Fields
+qsql = "SELECT cfv.stringvalue AS \"Group(s)\", cf.cfname AS \"Custom Field\", CONCAT(p.pkey, '-', ji.issuenum) AS \"Issue\" FROM customfieldvalue cfv LEFT JOIN customfield cf ON cf.id = cfv.customfield LEFT JOIN jiraissue ji ON cfv.issue = ji.id LEFT JOIN project p ON ji.project = p.id WHERE cf.customfieldtypekey IN ('com.atlassian.jira.plugin.system.customfieldtypes:grouppicker', 'com.atlassian.jira.plugin.system.customfieldtypes:multigrouppicker') AND cfv.stringvalue in ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Custom Fields");
+    number n = size(result) / 3;
+    if (n > 1){
+        for(int i=0;size(result)/n >= i;i=i+3){
+            runnerLog("Имя поля: " + result[i+1]);
+            runnerLog("Задача: " + result[i+2]);
+            runnerLog("---");
+        }
+    }
+    else {
+        runnerLog("Имя поля: " + result[1]);
+        runnerLog("Задача: " + result[2]);
+        runnerLog("---");
+    }
+}
+else runnerLog("Custom Fields не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя Поля, result[2] = Ключ задачи
+
+//Shared Dashboards
+qsql = "SELECT shp.param1 AS \"Group\", pp.pagename AS \"Dashboard\" FROM sharepermissions shp LEFT JOIN portalpage pp ON shp.entityid = pp.id WHERE shp.entitytype = 'PortalPage' AND shp.sharetype = 'group' AND shp.param1 IN ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Shared Dashboards");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("Dashboard name: " + result[i+1]);
+        }
+    }
+    else {
+        runnerLog("Dashboard name: " + result[1]);
+    }
+}
+else runnerLog("Shared Dashboards не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя Дашборда
+
+//Shared Filters
+qsql = "SELECT shp.param1 AS \"Group\", sr.filtername AS \"Filter\" FROM sharepermissions shp LEFT JOIN searchrequest sr ON shp.entityid = sr.id WHERE shp.entitytype = 'SearchRequest' AND shp.sharetype = 'group' AND shp.param1 IN ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+
+if(isNotNull(result)){
+    runnerLog("Shared Filters");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("Имя фильтра: " + result[i+1]);
+        }
+    }
+    else {
+        runnerLog("Имя фильтра: " + result[1]);
+    }
+}
+else runnerLog("Shared Filters не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя Фильтра
+
+//Filter Subscriptions
+qsql = "SELECT fs.groupname AS \"Group\", fs.filter_i_d AS \"Filter\" FROM filtersubscription fs LEFT JOIN searchrequest sr ON fs.filter_i_d = sr.id WHERE fs.groupname IN ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Filter Subscriptions");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("ID фильтра: " + result[i+1]);
+        }
+    }
+    else {
+        runnerLog("ID фильтра: " + result[1]);
+    }
+}
+else runnerLog("Filter Subscriptions не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = ID Фильтра
+
+//Board Administrators (JIRA Agile)
+qsql = "SELECT ba.\"KEY\" AS \"Group\", rv.\"NAME\" AS \"Board\" FROM \"AO_60DB71_BOARDADMINS\" ba LEFT JOIN \"AO_60DB71_RAPIDVIEW\" rv ON ba.\"RAPID_VIEW_ID\" = rv.\"ID\" WHERE ba.\"TYPE\" = 'GROUP' AND ba.\"KEY\" IN ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Board Administrators");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("Board name: " + result[i+1]);
+        }
+    }
+    else {
+        runnerLog("Board name: " + result[1]);
+    }
+}
+else runnerLog("Board Administrators не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя борды
+
+//Application Access (JIRA 7+)
+qsql = "SELECT license_role_name AS \"Application\", group_id AS \"Group\" FROM licenserolesgroup WHERE group_id in ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Application Access");
+    number n = size(result) / 2;
+    if(n > 1){
+        for(int i=0;size(result)/n >= i;i=i+2){
+            runnerLog("Application: " + result[i+1]);
+        }
+    }
+    else {
+        runnerLog("Application: " + result[1]);
+    }
+}
+else runnerLog("Application Access не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя приложения
+
+//Saved Filters content
+qsql = "SELECT id AS \"Filter ID\", filtername AS \"Filter Name\", reqcontent AS \"JQL\" FROM searchrequest WHERE reqcontent like '%" + groupName + "%';";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Saved Filters");
+    number n = size(result) / 3;
+    if (n > 1){
+        for(int i=0;size(result)/n >= i;i=i+3){
+            runnerLog("ID фильтра: " + result[i]);
+            runnerLog("Имя фильтра: " + result[i+1]);
+            runnerLog("JQL: " + result[i+2]);
+            runnerLog("---");
+        }
+    }
+    else {
+        runnerLog("ID фильтра: " + result[0]);
+        runnerLog("Имя фильтра: " + result[1]);
+        runnerLog("JQL: " + result[2]);
+        runnerLog("---");
+    }
+}
+else runnerLog("Saved Filters не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog("Фильтры: " + result);
+//result[0] = ID фильтра, result[1] = Имя фильтра, result[2] = JQL
+
+//Notification Schemes
+//qsql = "SELECT * FROM notification WHERE notif_type LIKE '%" + groupName + "%';";
+qsql = "SELECT SCHEME FROM notification WHERE notif_parameter LIKE '%" + groupName + "%';";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Notification Schemes");
+    string [] nArray;
+    for(string r in result){
+        if(!elementExists(nArray, r)){
+            nArray += r;
+        }
+    }
+    for(string na in nArray){
+        qsql = "SELECT NAME FROM notificationscheme WHERE ID = " + na;
+        result = sql("JIRADB", qsql);
+        runnerLog("Notification scheme name: " + result + " ID: " + na);
+        runnerLog("---");
+    }
+}
+else runnerLog("Notification scheme не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+
+
+//Permission Schemes
+qsql = "SELECT SP.perm_parameter AS GroupName, PS.name AS PermissionSchemeName, SP.permission_key AS Permission FROM schemepermissions SP INNER JOIN permissionscheme PS ON SP.scheme = PS.id WHERE SP.perm_type = 'group' AND SP.perm_parameter in ('" + groupName + "');";
+result = sql("JIRADB", qsql);
+if(isNotNull(result)){
+    runnerLog("Permission Schemes");
+    number n = size(result) / 3;
+    if (n > 1){
+        for(int i=0;size(result)/n >= i;i=i+3){
+            runnerLog("Имя схемы: " + result[i+1]);
+            runnerLog("Параметр: " + result[i+2]);
+            runnerLog("---");
+        }
+    }
+    else {
+        runnerLog("Имя схемы: " + result[1]);
+        runnerLog("Параметр: " + result[2]);
+        runnerLog("---");
+    }
+}
+else runnerLog("Permission Schemes не используют группу " + groupName);
+runnerLog("---#---#---#---#---");
+//runnerLog(result);
+//result[0] = Группа, result[1] = Имя пермишин схемы, result[2] = Параметр
+
+//Workflows
+qsql = "SELECT jw.workflowname AS \"Workflow\", jw.descriptor AS \"Descriptor\" FROM jiraworkflows jw;";
+result = sql("JIRADB", qsql);
+//Тут в результате будет XML workflow в котором надо поискать совпадения и понять как выдергивать название (поработаю в отдельном файле)
+if(matchText(result, "<arg name=\"group\">" + groupName + "</arg>") != ""){
+    runnerLog("Есть совпадение " + matchText(result, "<arg name=\"group\">" + groupName + "</arg>"));
+    if(showWorkflowXml){
+        runnerLog(result);
+    }
+    else runnerLog("Опция показа XML выключена.");
+}
+else runnerLog("Совпадений в Workflow не нашлось!");
+
+//runnerLog(result);

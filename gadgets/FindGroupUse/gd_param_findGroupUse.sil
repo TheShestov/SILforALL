@@ -1,0 +1,6 @@
+string groupName;
+boolean isRequired = true;
+boolean isNotRequired = false;
+
+gadget_createInput("Имя группы", "", isRequired, "Имя группы, по которому будет осуществлен поиск");
+gadget_createSingleCheckbox("XML", false, isNotRequired, "Отметьте, если требуется вывод XML");
